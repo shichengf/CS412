@@ -120,7 +120,7 @@ and true factor).
 - W. Yao, G. Chen, K. Zhang. Temporally Disentangled Representation Learning. NeurIPS 2022.
   The first stage follows this family of temporal VAEs.
 - S. Fan, K. Zhang, L. Cheng. TRACE: Trajectory Recovery for Continuous Mechanism Evolution
-  in Causal Representation Learning. arXiv:2601.21135, 2026.
+  in Causal Representation Learning. ICML 2026, arXiv:2601.21135.
 - S. Fan, N. Elhendawy, J. Sun, K. Fang, K. Zhang, Y. Wang, L. Cheng. MOSAIC: Module
   Discovery via Sparse Additive Identifiable Causal Learning for Scientific Time Series.
   NeurIPS 2026, arXiv:2605.05524.
