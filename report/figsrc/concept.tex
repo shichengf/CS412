@@ -1,0 +1,39 @@
+\documentclass[tikz,border=2pt]{standalone}
+\usepackage{times}
+\usepackage{amsmath,amssymb}
+\usetikzlibrary{arrows.meta,calc,decorations.markings}
+\definecolor{ink}{HTML}{0b0b0b}
+\definecolor{sub}{HTML}{52514e}
+\definecolor{axis}{HTML}{9a9994}
+\definecolor{ours}{HTML}{2a78d6}
+\definecolor{tint}{HTML}{eef4fc}
+\begin{document}
+\begin{tikzpicture}[font=\footnotesize, text=ink, >={Stealth[length=5pt]}]
+  \coordinate (A) at (0,0);
+  \coordinate (B) at (5.4,0);
+  \coordinate (C) at (2.7,3.5);
+  \fill[tint] (A)--(B)--(C)--cycle;
+  \draw[axis, line width=0.6pt] (A)--(B)--(C)--cycle;
+
+  % a discrete-switching view: a jump along the edge
+  \draw[sub, dashed, line width=0.7pt] (A) .. controls (1.6,0.55) and (3.8,0.55) .. (B);
+  \node[sub, font=\scriptsize] at (2.7,0.78) {a different path, same endpoints};
+
+  % a gradual transition through the interior, with time steps marked
+  \draw[ours, line width=1.2pt, ->,
+        postaction={decorate, decoration={markings,
+          mark=between positions 0.12 and 0.88 step 0.19 with {\fill[ours] (0,0) circle (1.6pt);}}}]
+        (A) .. controls (2.0,2.3) and (3.4,2.3) .. (B);
+  \coordinate (S) at (2.7,1.725);
+  \fill[white] (S) circle (2.6pt);
+  \draw[ours, line width=1pt] (S) circle (2.6pt);
+  \node[anchor=south, font=\scriptsize] at ($(S)+(0,0.16)$) {$W(t)=\sum_k \alpha_k(t)\,W^{(k)}$};
+
+  % atomic mechanisms at the vertices
+  \foreach \p/\lab/\anc in {A/{regime 0, $W^{(0)}$}/north, B/{regime 1, $W^{(1)}$}/north, C/{regime 2, $W^{(2)}$}/south}{
+    \fill[ink] (\p) circle (2.2pt);
+    \node[anchor=\anc, inner sep=4pt] at (\p) {\lab};
+  }
+  \node[ours, font=\scriptsize, anchor=west] at (4.55,1.55) {transition $\boldsymbol{\alpha}(t)$};
+\end{tikzpicture}
+\end{document}
