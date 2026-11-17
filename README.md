@@ -26,9 +26,10 @@ dyncrl/
   data/
     transitions.py  benchmark for tracking (K mechanisms, one changed edge each)
     doublewell.py   benchmark for interpretation (double-well dynamics, known supports)
+  baselines/        comparison methods for the two readouts
 run_tracking.py     tracking experiment, end to end
 run_interpret.py    interpretation experiment, end to end
-report/             final report (LaTeX sources, figures, figure scripts)
+report/             final report (LaTeX sources and figures)
 ```
 
 ## Method in brief
@@ -59,7 +60,8 @@ most influenced observations.
 pip install -r requirements.txt
 ```
 
-Python 3.9 or later. Both experiments generate their own data and run on a CPU.
+Python 3.9 or later. The repository contains no data files: both experiments simulate
+their own data from a seed and run on a CPU. Outputs go to `results/`, which is not tracked.
 
 ## Running the experiments
 
@@ -87,10 +89,25 @@ the factors `x`, `z1` and `z2`, the three factors that drive the regime, and the
 influenced observations are `[3, 2, 4]`, `[8, 6, 5]` and `[12, 9, 6]`, against true
 supports `[0-4]`, `[5-8]` and `[4, 9-12]`.
 
+## Tracking experiment in more detail
+
+`run_tracking.py` trains Stage 1 on windows from the pure regimes, builds the differential
+basis from the regime means, and recovers the mixing weights along a test path through
+`--active` of the `--regimes` mechanisms. It saves `results/tracking/weights.npz` with the
+arrays `alpha_true`, `alpha_raw`, `alpha_hat` (smoothed), `alpha_calibrated` and `regimes`.
+
+## Interpretation experiment in more detail
+
+`run_interpret.py` simulates the double-well system, trains Stage 1, fits the additive
+decoder, and compares its influence matrix with the known supports. It saves
+`results/interpret/influence.npz` with the arrays `influence` (observations by latents),
+`truth` (observations by true factors), `regime_shift` and `match` (pairs of learned latent
+and true factor).
+
 ## Report
 
-`report/main.tex` is the final report in the CVPR template. The figures are produced by
-`report/figsrc/make_figs.py` (bar charts and heat maps) and the two TikZ files next to it.
+`report/main.tex` is the final report in the CVPR template, with its figures in
+`report/figs/` and the TikZ sources of the two schematics in `report/figsrc/`.
 
 ## References
 
