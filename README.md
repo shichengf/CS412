@@ -33,6 +33,8 @@ dyncrl/
   baselines/        comparison methods for the two readouts
 run_tracking.py     tracking experiment, end to end
 run_interpret.py    interpretation experiment, end to end
+plot_influence.py   heat maps of the influence matrices saved by run_interpret.py
+tests/              unit tests for the metrics, the two readouts and the double-well benchmark
 report/             final report (LaTeX sources and figures)
 proposal/            project proposal (PDF)
 intermediate_report/ intermediate project report (PDF)
@@ -109,6 +111,49 @@ decoder, and compares its influence matrix with the known supports. It saves
 `results/interpret/influence.npz` with the arrays `influence` (observations by latents),
 `truth` (observations by true factors), `regime_shift` and `match` (pairs of learned latent
 and true factor).
+
+As a comparison, the script also reads an influence matrix directly from the dense Stage 1
+decoder (`dyncrl/baselines/dense.py`). A dense decoder has no separate main effect per
+latent, so every latent is moved by one standard deviation in each direction around
+sampled encoded frames, and the absolute change of the decoded observations is averaged.
+The thresholded dense decoder keeps, in every column, only the entries at or above the
+column's 0.8 quantile. After the per-latent table the script prints one comparison table
+with the support precision of the additive decoder, the dense decoder and the thresholded
+dense decoder, all scored on the same three latents with the same matching. The two dense
+matrices are saved in `influence.npz` as `influence_dense` and
+`influence_dense_thresholded`.
+
+To plot the influence matrices:
+
+```bash
+python plot_influence.py
+```
+
+It reads `results/interpret/influence.npz` (`--input`) and writes
+`results/interpret/influence.pdf` (`--output`): stacked heat maps over the 30 observed
+variables for the ground truth, the additive decoder and the dense decoder, with one row
+per true factor. For a learned matrix each row shows the latent matched to that factor,
+divided by its maximum; a factor without a matched latent is left empty.
+
+## Tests
+
+```bash
+pytest -q
+```
+
+Run from the repository root. The tests use fixed seeds, train no model and finish in a
+few seconds.
+
+- `tests/test_metrics.py`: MCC under permutation, sign flips, rescaling and extra latents;
+  weight correlation; support precision on hand-built influence matrices, including the
+  concentration gate.
+- `tests/test_tracking.py`: the simplex projection, exact recovery of convex mixing
+  weights, batched input, smoothing, calibration, regime selection and the conditioning of
+  the basis.
+- `tests/test_interpret.py`: the additive decoder and its influence matrix, the entropy and
+  overlap penalties, the regime shift, and the double-well benchmark (true supports and the
+  gradient of the potential against finite differences). It is skipped when PyTorch is not
+  installed.
 
 ## Report
 
