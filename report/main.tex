@@ -514,13 +514,12 @@ Other directions are a finite-sample guarantee for the entropy penalty, learning
 
 % =====================================================================
 \section*{Team Contributions}
-\TODO{Draft division of work. Edit so that it states what each member actually did and matches the commit history in the project repository.}
+All three members worked out the problem formulation and went through the proofs together.
+Shicheng Fan implemented the shared first stage and the interpretation readout (Sec.~\ref{sec:interp}), ran its experiments, and integrated the two parts in the code and in this report.
+Jie Yang worked on the tracking part (Sec.~\ref{sec:track}): the transition paths of the synthetic benchmark, the discrete-switching baseline, and, together with Shicheng Fan, the tracking experiments.
+Honghui Bao wrote the intermediate report and the literature survey (Sec.~\ref{sec:related}), and contributed the unit tests, the dense-decoder comparison, and the plots of the influence matrices.
 
-Shicheng Fan: interpretation part (Sec.~\ref{sec:interp}) and its experiments; overall framing; integration and final editing of the report.
-Jie Yang: tracking part (Sec.~\ref{sec:track}), including the recovery bounds and the comparison with baselines.
-Honghui Bao: literature survey (Sec.~\ref{sec:related}); problem setup and comparison of the two readouts (Secs.~\ref{sec:problem} and~\ref{sec:discussion}); figures, tables, and presentation slides.
-
-Code: \TODO{Add the link to the project repository.}
+The proposal, both reports, and the code are maintained at \url{https://github.com/shichengf/CS412}.
 
 \nocite{fan2026mosaic,fan2026trace}
 {

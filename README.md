@@ -34,6 +34,7 @@ dyncrl/
 run_tracking.py     tracking experiment, end to end
 run_interpret.py    interpretation experiment, end to end
 report/             final report (LaTeX sources and figures)
+proposal/            project proposal (PDF)
 intermediate_report/ intermediate project report (PDF)
 ```
 
