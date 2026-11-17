@@ -14,6 +14,7 @@ import torch
 
 from dyncrl import TemporalVAE, fit_stage1
 from dyncrl import interpret
+from dyncrl.baselines.dense import dense_influence, threshold_influence
 from dyncrl.data import doublewell
 from dyncrl.metrics import mcc, support_precision
 
@@ -61,9 +62,20 @@ def main():
         truth = sorted(supports.get(factor, []))
         print(f"z{j:<6d} {shift[j]:<13.2f} {name:<15s} {str(interpret.top_features(A, j).tolist()):<29s} {truth}")
 
+    # comparison: influence read from the dense Stage 1 decoder, raw and thresholded
+    A_dense = dense_influence(vae, x)
+    A_thresh = threshold_influence(A_dense)
+    rows = [("additive decoder", precision),
+            ("dense decoder", support_precision(A_dense, supports, top, match)),
+            ("thresholded dense decoder", support_precision(A_thresh, supports, top, match))]
+    print(f"\n{'influence matrix':<27s} support precision")
+    for name, value in rows:
+        print(f"{name:<27s} {value:.3f}")
+
     os.makedirs(args.out, exist_ok=True)
     np.savez(os.path.join(args.out, "influence.npz"), influence=A, truth=doublewell.true_influence(),
-             regime_shift=shift, match=np.array(sorted(match.items())))
+             regime_shift=shift, match=np.array(sorted(match.items())),
+             influence_dense=A_dense, influence_dense_thresholded=A_thresh)
     print(f"\nsaved {args.out}/influence.npz")
 
 
