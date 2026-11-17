@@ -197,7 +197,7 @@ Guarantee & Thms.~\ref{thm:pointwise}, \ref{thm:smooth} & Prop.~\ref{prop:nofp},
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figs/pipeline.pdf}
-\caption{Overview. Stage~1 learns identifiable latents with a regime-conditioned transition prior. Stage~2 freezes the encoder and adds one of two readouts: a projection that tracks the mixing weights of a transition, or an additive decoder whose influence matrix names the observed variables behind the latent that changes. Observed variables that behave differently in the two regimes are drawn in orange.}
+\caption{Overview. Stage~1 learns identifiable latents with a regime-conditioned transition prior. Stage~2 freezes the encoder and adds one of two readouts: a projection that tracks the mixing weights of a transition, or an additive decoder whose influence matrix names the observed variables behind the latent that changes. Observed variables that behave differently in the two regimes are drawn in teal.}
 \label{fig:pipeline}
 \end{figure*}
 
@@ -389,7 +389,7 @@ Support precision is the fraction of a latent's three most influenced observatio
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figs/track_results.pdf}
-\caption{Tracking compared with existing methods. (a)~Correlation between recovered and true mixing weights on synthetic transitions. (b)~Latent recovery on the same benchmark. (c)~Correlation with a kinematic proxy on a real vehicle turn. Thin lines show the spread across runs.}
+\caption{Tracking compared with existing methods. (a)~Correlation between recovered and true mixing weights on synthetic transitions. (b)~Latent recovery on the same benchmark. (c)~Correlation with a kinematic proxy on a real vehicle turn. Error bars show the spread across runs.}
 \label{fig:track}
 \end{figure*}
 
@@ -409,13 +409,14 @@ On a 26-frame left turn our readout reaches a correlation of $0.960$ with the pr
 NCTRL reaches $0.239$ because it jumps back and forth between the two regimes.
 Two simple heuristics based on centroid tracking and optical flow reach $0.911$ and $0.902$.
 The same picture appears for walk-to-run transitions in motion-capture data with hip speed as the proxy: our readout reaches $0.856\pm0.043$ across trials, while NCTRL produces five spurious switches during a single transition.
+The readout also works when the observations are images: on a CartPole system rendered as $128\times128$ frames, with five regimes that each strengthen one causal edge, it reaches an MCC of $0.970$ and a weight correlation of $0.95$ on a path through three regimes.
 
 \subsection{Interpreting changes}
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figs/interp_synth.pdf}
-\caption{Interpretation on a benchmark with known supports. (a)~Influence of each true factor (rows) on each observed variable (columns): ground truth, our additive decoder, and a dense decoder. (b)~Latent recovery. (c)~Support precision. Thin lines show one standard deviation over five seeds.}
+\caption{Interpretation on a benchmark with known supports. (a)~Influence of each true factor (rows) on each observed variable (columns): ground truth, our additive decoder, and a dense decoder. (b)~Latent recovery. (c)~Support precision. Error bars show one standard deviation over five seeds; the hatched bar is TDRL with its influence map thresholded after training.}
 \label{fig:interp_synth}
 \end{figure*}
 
@@ -444,18 +445,18 @@ This agrees with what is known about this molecule, where fluctuations of the lo
 The dense decoder also produces a sparse-looking profile, but its largest entry is in the Stem.
 Measured as the precision of the eight most influenced features against the Loop, our decoder reaches $0.880$, Sparse PCA $0.750$, TDRL $0.625$, and SPIB $0.400$ (Fig.~\ref{fig:interp_rna}(d)).
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{figs/interp_protein.pdf}
-\caption{A three-helix protein. (a)~Number of the 40 most influenced features that lie in helix H1, which holds 40 of the 132 features. (b)~Ratio between the largest and second-largest regime shift among components.}
+\includegraphics[width=\textwidth]{figs/interp_protein.pdf}
+\caption{A three-helix protein and four further domains. (a)~Number of the 40 most influenced features that lie in helix H1, which holds 40 of the 132 features; the dashed line is the chance level. (b)~Ratio between the largest and second-largest regime shift among components. SPCA is Sparse PCA with a strong or a weak penalty. (c)~Ratio between the mean influence on the expected group of variables and on the runner-up group, shown as the range over three runs per domain. The expected group ranked first in all runs.}
 \label{fig:interp_protein}
-\end{figure}
+\end{figure*}
 
 \para{Protein}
 The second molecular system is the three-helix protein HP35, from a long folding simulation~\cite{piana2012protein}.
 Each frame is described by 132 backbone dihedral angles, and the regimes are defined by whether the first helix, H1, is folded.
 The model sees the angles and the regime label, with no information about which angles belong to H1.
-Figure~\ref{fig:interp_protein} shows that simple baselines get either a clearly separated component or a localized one.
+Figure~\ref{fig:interp_protein}(a,\,b) shows that simple baselines get either a clearly separated component or a localized one.
 FastICA separates well but its features are spread over the protein, and Sparse PCA with a strong penalty concentrates on H1 but cannot tell H1 from H2.
 Our decoder gives a clearly separated latent with 30 of its top 40 features in H1.
 
@@ -463,6 +464,28 @@ Our decoder gives a clearly separated latent with 30 of its top 40 features in H
 With the same pipeline and hyperparameters we also tried solar wind~\cite{king2005omni}, sea-surface temperature with ENSO phases~\cite{huang2017extended}, the Tennessee Eastman chemical process~\cite{downs1993plant}, and a synthetic tokamak benchmark.
 No latent ground truth exists there, so we only checked whether the group of variables with the largest mean influence is the one that domain knowledge expects.
 It was in all 12 runs.
+Figure~\ref{fig:interp_protein}(c) shows how clearly the expected group stands out.
+Its mean influence is up to twice that of the runner-up group for the tokamak and climate data, and close to it for the chemical process, where four different faults are labeled as one regime and share a single downstream signature.
+
+\subsection{A compact implementation}
+\label{sec:own}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figs/own_runs.pdf}
+\caption{Runs of our compact implementation on a laptop CPU. (a)~Mixing weights along a path through three of five regimes, recovered after endpoint calibration (solid) and true (dashed). (b)~True supports of the double-well benchmark and the influence matrix recovered by the additive decoder. Each row shows the learned latent matched to that factor, normalized by its maximum.}
+\label{fig:own}
+\end{figure*}
+
+The experiments above were run at full scale on GPUs.
+To check that the two readouts do not depend on that scale, we wrote a compact implementation of the shared first stage and of both readouts in a few hundred lines of PyTorch.
+It simulates its own data and runs on a laptop CPU in about ten minutes per experiment.
+For tracking, the model is trained on $20{,}000$ windows from each of five regimes and tested on a path through three of them.
+It reaches an MCC of $0.970$ and a weight correlation of $0.967$ after smoothing, against $0.874$ before, and Fig.~\ref{fig:own}(a) shows the recovered path.
+For interpretation, the double-well system is simulated with 32 short chains, about a quarter of the data used above.
+The model reaches an MCC of $0.943$ and a support precision of $0.889$.
+The three latents with the largest regime shift are matched to the three factors that drive the regime, and the recovered influence matrix follows the block structure of the true supports (Fig.~\ref{fig:own}(b)).
+The recovered supports are sparser than the true ones: every latent finds a part of its block rather than all of it.
 
 % =====================================================================
 \section{Discussion}
