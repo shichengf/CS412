@@ -15,6 +15,10 @@ that a learned latent representation can tell us about such a change:
 Both parts share the same first stage and differ only in the readout applied to its
 frozen encoder.
 
+The project started with the tracking part, which is what the intermediate report in
+`intermediate_report/` covers. The interpretation part was added afterwards to widen the
+scope for a team of three.
+
 ## Repository layout
 
 ```
@@ -30,6 +34,7 @@ dyncrl/
 run_tracking.py     tracking experiment, end to end
 run_interpret.py    interpretation experiment, end to end
 report/             final report (LaTeX sources and figures)
+intermediate_report/ intermediate project report (PDF)
 ```
 
 ## Method in brief
