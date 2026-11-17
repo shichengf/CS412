@@ -90,10 +90,8 @@ A second stage adds a readout to the frozen representation, one for each aspect:
 \item Tracking (Sec.~\ref{sec:track}).
 The mechanism state is a point in a simplex spanned by a few atomic mechanisms.
 A least-squares projection of the latent dynamics onto a learned basis recovers the time-varying mixing weights.
-We call this readout TRACE.
 \item Interpreting (Sec.~\ref{sec:interp}).
 Given two regimes, for instance the two ends of a transition, an additive sparse decoder recovers which observed variables each latent drives.
-We call this readout MOSAIC.
 \end{itemize}
 Because each readout is simple, it can be analyzed.
 We show that the mixing trajectory is recovered with an explicit error bound, and that the observation supports of the latents are identifiable.
@@ -182,7 +180,7 @@ In interpreting, we are given two regimes and must find the latent whose behavio
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lll@{}}
 \toprule
- & Tracking (TRACE) & Interpreting (MOSAIC) \\
+ & Tracking & Interpreting \\
 \midrule
 Goal & follow the transition & explain the change \\
 Mechanism state & $\valpha(t)\in\Delta^{K-1}$ & regime $c_t\in\{0,1\}$ \\
@@ -198,8 +196,8 @@ Guarantee & Thms.~\ref{thm:pointwise}, \ref{thm:smooth} & Prop.~\ref{prop:nofp},
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.92\textwidth]{figs/pipeline.pdf}
-\caption{Overview. Stage~1 learns identifiable latents with a regime-conditioned transition prior. Stage~2 freezes the encoder and adds one of two readouts: a projection that tracks the mixing weights of a transition, or an additive decoder whose influence matrix names the latent that changes.}
+\includegraphics[width=\textwidth]{figs/pipeline.pdf}
+\caption{Overview. Stage~1 learns identifiable latents with a regime-conditioned transition prior. Stage~2 freezes the encoder and adds one of two readouts: a projection that tracks the mixing weights of a transition, or an additive decoder whose influence matrix names the observed variables behind the latent that changes. Observed variables that behave differently in the two regimes are drawn in orange.}
 \label{fig:pipeline}
 \end{figure*}
 

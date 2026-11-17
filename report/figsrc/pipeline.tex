@@ -1,7 +1,7 @@
 \documentclass[tikz,border=2pt]{standalone}
 \usepackage{times}
 \usepackage{amsmath,amssymb}
-\usetikzlibrary{arrows.meta,calc,positioning,fit,backgrounds}
+\usetikzlibrary{arrows.meta,calc}
 \definecolor{ink}{HTML}{0b0b0b}
 \definecolor{sub}{HTML}{52514e}
 \definecolor{axis}{HTML}{9a9994}
@@ -9,47 +9,100 @@
 \definecolor{tint}{HTML}{eef4fc}
 \definecolor{warm}{HTML}{eb6834}
 \definecolor{warmtint}{HTML}{fdf0ea}
-\definecolor{greytint}{HTML}{f3f3f1}
+\definecolor{greytint}{HTML}{f5f5f3}
+\definecolor{bandA}{HTML}{f5f5f3}
+\definecolor{bandB}{HTML}{e3e2dd}
 \begin{document}
-\begin{tikzpicture}[font=\footnotesize, text=ink, >={Stealth[length=5pt]},
-    box/.style={draw=axis, line width=0.6pt, rounded corners=2pt, fill=greytint, align=center, inner sep=5pt, minimum height=0.95cm},
-    tr/.style={box, draw=ours, fill=tint},
-    mo/.style={box, draw=warm, fill=warmtint},
-    lab/.style={font=\scriptsize, text=sub, align=center},
-    arr/.style={->, line width=0.7pt, draw=sub}]
+\begin{tikzpicture}[font=\footnotesize, text=ink, >={Stealth[length=4.5pt]},
+    declare function={step(\x)=0.5+0.5*tanh(4.5*(\x-1.65));},
+    head/.style={font=\footnotesize, anchor=south west, inner sep=0pt},
+    note/.style={font=\scriptsize, text=sub, align=center, inner sep=1pt},
+    arr/.style={->, line width=0.7pt, draw=sub},
+    card/.style={rounded corners=5pt, line width=0.6pt}]
 
-  % ---------------- Stage 1
-  \node[box] (x) {observations $\mathbf{x}_t$\\[-1pt]{\scriptsize named variables}};
-  \node[box, right=0.75cm of x] (enc) {encoder};
-  \node[box, right=0.75cm of enc] (z) {latents $\mathbf{z}_t$};
-  \node[box, below=0.85cm of z, xshift=-1.1cm] (prior) {transition prior, one per regime\\[-1pt]{\scriptsize $p(\mathbf{z}_t\mid\mathbf{z}_{t-1},\,s_t)$}};
-  \draw[arr] (x) -- (enc);
-  \draw[arr] (enc) -- (z);
-  \draw[<->, line width=0.7pt, draw=sub] (z.south) -- node[lab, right] {KL} (z.south |- prior.north);
-
-  % ---------------- Stage 2, tracking
-  \node[tr, right=1.9cm of z, yshift=1.05cm] (proj) {projection onto\\[-1pt]regime basis $\hat B$};
-  \node[tr, right=0.75cm of proj] (alpha) {mixing weights\\[-1pt]$\hat{\boldsymbol{\alpha}}(t)$};
-  \draw[arr] (z.east) -- ++(0.95,0) |- (proj.west);
-  \draw[arr] (proj) -- (alpha);
-
-  % ---------------- Stage 2, interpreting
-  \node[mo, right=1.9cm of z, yshift=-1.05cm] (dec) {additive decoder\\[-1pt]$\sum_j f_j(z_j)$};
-  \node[mo, right=0.75cm of dec] (A) {influence matrix $A$\\[-1pt]{\scriptsize entropy penalty}};
-  \node[mo, right=0.75cm of A] (mod) {named\\[-1pt]module};
-  \draw[arr] (z.east) -- ++(0.95,0) |- (dec.west);
-  \draw[arr] (dec) -- (A);
-  \draw[arr] (A) -- (mod);
-
-  \node[lab, text=ours, anchor=south west] at (proj.north west) {Tracking (TRACE)};
-  \node[lab, text=warm, anchor=north west] at (dec.south west) {Interpreting (MOSAIC)};
-
-  % ---------------- stage frames
-  \begin{scope}[on background layer]
-    \node[draw=axis, dashed, line width=0.5pt, rounded corners=3pt, inner sep=7pt, fit=(x)(enc)(z)(prior)] (s1) {};
-    \node[draw=axis, dashed, line width=0.5pt, rounded corners=3pt, inner xsep=7pt, inner ysep=14pt, fit=(proj)(alpha)(dec)(A)(mod)] (s2) {};
+  % ================= observations: a few series over two regimes
+  \node[head] at (0,5.55) {Observations $\mathbf{x}_t$};
+  \begin{scope}
+    \clip[rounded corners=5pt] (0,0.6) rectangle (3.3,5.4);
+    \fill[bandA] (0,0.6) rectangle (1.25,5.4);
+    \shade[left color=bandA, right color=bandB] (1.25,0.6) rectangle (2.05,5.4);
+    \fill[bandB] (2.05,0.6) rectangle (3.3,5.4);
   \end{scope}
-  \node[lab, anchor=south west] at (s1.north west) {Stage 1: identify the latents};
-  \node[lab, anchor=south west] at (s2.north west) {Stage 2: read out the change (encoder frozen)};
+  \draw[card, draw=axis] (0,0.6) rectangle (3.3,5.4);
+  \draw[sub, line width=0.6pt] plot[domain=0.2:3.1, samples=90, smooth] (\x, {4.75 + 0.16*sin(deg(8*\x))});
+  \draw[warm, line width=0.8pt] plot[domain=0.2:3.1, samples=90, smooth] (\x, {3.85 + 0.12*sin(deg(10*\x)) + 0.38*step(\x)});
+  \draw[sub, line width=0.6pt] plot[domain=0.2:3.1, samples=90, smooth] (\x, {3.20 + 0.14*sin(deg(6*\x+40))});
+  \draw[warm, line width=0.8pt] plot[domain=0.2:3.1, samples=90, smooth] (\x, {2.45 + (0.06+0.24*step(\x))*sin(deg(12*\x))});
+  \draw[sub, line width=0.6pt] plot[domain=0.2:3.1, samples=90, smooth] (\x, {1.70 + 0.15*sin(deg(7*\x+90))});
+  \node[note] at (0.65,0.95) {regime 0};
+  \node[note] at (1.65,0.95) {$\rightarrow$};
+  \node[note] at (2.65,0.95) {regime 1};
+
+  % ================= stage 1
+  \node[head] at (4.1,5.55) {Stage 1: learn identifiable latents};
+  \fill[card, greytint] (4.1,0.6) rectangle (9.3,5.4);
+  \draw[card, draw=axis] (4.1,0.6) rectangle (9.3,5.4);
+  \draw[arr] (3.4,3.2) -- (4.4,3.2);
+  \draw[draw=sub, line width=0.6pt, fill=white, rounded corners=1.5pt]
+      (4.45,2.0) -- (4.45,4.4) -- (5.7,3.75) -- (5.7,2.65) -- cycle;
+  \node[font=\scriptsize] at (5.07,3.2) {encoder};
+  \draw[arr] (5.75,3.2) -- (6.55,3.2);
+  % two consecutive latent vectors and the transition between them
+  \foreach \y in {4.1,3.5,2.9,2.3}{
+    \draw[axis, line width=0.5pt] (6.95,\y) -- (8.45,\y);
+  }
+  \draw[axis, line width=0.5pt] (6.95,4.1) -- (8.45,3.5) (6.95,2.9) -- (8.45,3.5)
+      (6.95,3.5) -- (8.45,2.3) (6.95,2.3) -- (8.45,2.9) (6.95,3.5) -- (8.45,4.1);
+  \foreach \y in {4.1,3.5,2.9,2.3}{
+    \draw[sub, line width=0.6pt, fill=white] (6.95,\y) circle (0.17);
+    \draw[sub, line width=0.6pt, fill=white] (8.45,\y) circle (0.17);
+  }
+  \node[inner sep=1pt] at (6.95,4.62) {$\mathbf{z}_{t-1}$};
+  \node[inner sep=1pt] at (8.45,4.62) {$\mathbf{z}_{t}$};
+  \node[note] at (7.7,1.6) {regime-conditioned transition prior};
+  \node[inner sep=1pt] at (7.7,1.12) {$p(\mathbf{z}_t\mid \mathbf{z}_{t-1},\,c_t)$};
+
+  % ================= stage 2
+  \node[head] at (10.3,5.55) {Stage 2: read out the change, encoder frozen};
+  \draw[arr] (8.8,3.2) -- (9.8,3.2) |- (10.25,4.325);
+  \draw[arr] (9.8,3.2) |- (10.25,1.675);
+
+  % ---- tracking
+  \fill[card, tint] (10.3,3.25) rectangle (17.6,5.4);
+  \draw[card, draw=ours] (10.3,3.25) rectangle (17.6,5.4);
+  \node[anchor=west, text=ours, inner sep=0pt] at (10.55,5.08) {Tracking the transition};
+  \node[inner sep=1pt] at (12.3,4.3)
+      {$\hat{\boldsymbol{\alpha}}(t)=\mathrm{Proj}_{\Delta}\big(\hat{B}^{\dagger}(\hat{\mathbf{z}}_t-\hat{\boldsymbol{\mu}}^{0})\big)$};
+  \node[note] at (12.3,3.74) {least-squares projection};
+  \draw[arr] (14.45,4.3) -- (14.85,4.3);
+  \begin{scope}[shift={(15.1,3.8)}]
+    \draw[axis, line width=0.5pt] (0,1.02) -- (0,0) -- (2.1,0);
+    \draw[ours, line width=1pt] plot[domain=0.05:2.05, samples=50, smooth] (\x, {0.9/(1+exp(5*(\x-1.05)))+0.03});
+    \draw[ours!45, line width=1pt] plot[domain=0.05:2.05, samples=50, smooth] (\x, {0.9/(1+exp(-5*(\x-1.05)))+0.03});
+    \node[font=\scriptsize, text=ours, inner sep=1pt, anchor=south west] at (0.08,0.98) {$\alpha_0$};
+    \node[font=\scriptsize, text=ours!60, inner sep=1pt, anchor=south east] at (2.05,0.98) {$\alpha_1$};
+    \node[note, anchor=north] at (1.05,-0.06) {mixing weights};
+  \end{scope}
+
+  % ---- interpreting
+  \fill[card, warmtint] (10.3,0.6) rectangle (17.6,2.75);
+  \draw[card, draw=warm] (10.3,0.6) rectangle (17.6,2.75);
+  \node[anchor=west, text=warm, inner sep=0pt] at (10.55,2.43) {Interpreting the change};
+  \node[inner sep=1pt] at (11.9,1.65) {$\hat{\mathbf{x}}_t=\sum_j f_j(z_{t,j})+\mathbf{b}$};
+  \node[note] at (11.9,1.09) {sparse additive decoder};
+  \draw[arr] (13.3,1.65) -- (13.62,1.65);
+  \begin{scope}[shift={(13.85,1.17)}]
+    % influence matrix: rows are latents, columns are observed variables
+    \fill[white] (0,0) rectangle (2.16,0.96);
+    \foreach \r/\c/\o in {3/0/85,3/1/100,3/2/70, 2/3/100,2/4/80, 1/5/90,1/6/100,1/2/30, 0/7/75,0/8/100}{
+      \fill[warm!\o!white] (\c*0.24,\r*0.24) rectangle ++(0.24,0.24);
+    }
+    \draw[warm!35, line width=0.3pt, step=0.24] (0,0) grid (2.16,0.96);
+    \draw[warm, line width=0.5pt] (0,0) rectangle (2.16,0.96);
+    \draw[ink, line width=0.7pt] (-0.035,0.48) rectangle (2.195,0.72);
+    \node[note, anchor=north] at (1.08,-0.07) {influence matrix $A$};
+  \end{scope}
+  \draw[arr] (16.12,1.65) -- (16.45,1.65);
+  \node[align=center, inner sep=1pt, font=\scriptsize] at (16.95,1.65) {named\\[-1pt]variables};
 \end{tikzpicture}
 \end{document}
