@@ -32,6 +32,7 @@ dyncrl/
     doublewell.py   benchmark for interpretation (double-well dynamics, known supports)
   baselines/        comparison methods for the two readouts
 run_tracking.py     tracking experiment, end to end
+plot_tracking.py    curves of the mixing weights saved by run_tracking.py
 run_interpret.py    interpretation experiment, end to end
 plot_influence.py   heat maps of the influence matrices saved by run_interpret.py
 tests/              unit tests for the metrics, the two readouts and the double-well benchmark
@@ -102,7 +103,36 @@ supports `[0-4]`, `[5-8]` and `[4, 9-12]`.
 `run_tracking.py` trains Stage 1 on windows from the pure regimes, builds the differential
 basis from the regime means, and recovers the mixing weights along a test path through
 `--active` of the `--regimes` mechanisms. It saves `results/tracking/weights.npz` with the
-arrays `alpha_true`, `alpha_raw`, `alpha_hat` (smoothed), `alpha_calibrated` and `regimes`.
+arrays `alpha_true`, `alpha_raw`, `alpha_hat` (smoothed), `alpha_calibrated`, `alpha_hard`,
+`alpha_soft` and `regimes`.
+
+`--path` sets the shape of the test path (`dyncrl/data/transitions.py`):
+
+- `linear` (default): the regimes are visited one after another, and within each segment
+  the weight moves linearly from one regime to the next, so at most two are active.
+- `sigmoid`: the same order, but the progress within a segment follows a sigmoid, so the
+  path dwells near each pure regime and moves quickly in between.
+- `simultaneous`: all visited regimes are active at once, with weights from phase-shifted
+  cosines normalised to sum to one.
+
+As a comparison, the script runs a discrete-switching baseline
+(`dyncrl/baselines/switching.py`) on the same latents. It assumes the system is in one
+regime at a time and assigns every latent vector to a regime mean: hard assignment picks
+the nearest mean and reports the fraction of sequences assigned to each regime per time
+step; soft assignment gives softmax weights over the negative squared distances and
+averages them over the sequences. The printed table lists the weight correlation of four
+readouts: tracking raw, tracking smoothed, hard assignment and soft assignment. The two
+baseline trajectories are saved in `weights.npz` as `alpha_hard` and `alpha_soft`.
+
+To plot the recovered weights:
+
+```bash
+python plot_tracking.py
+```
+
+It reads `results/tracking/weights.npz` (`--input`) and writes
+`results/tracking/weights.pdf` (`--output`): one panel per regime on the path, with the
+true weight, the smoothed and raw tracking estimates, and the hard-assignment baseline.
 
 ## Interpretation experiment in more detail
 
