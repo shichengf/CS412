@@ -104,6 +104,43 @@ def linear_path(steps, regimes, n_regimes):
     return alpha
 
 
+def sigmoid_path(steps, regimes, n_regimes, sharpness=10.0):
+    """Like linear_path, but the progress within a segment follows a sigmoid.
+
+    The sigmoid is rescaled to be exactly 0 and 1 at the segment ends, so the
+    path dwells near each pure regime and moves quickly in between.
+    """
+    lo, hi = 1 / (1 + np.exp(sharpness / 2)), 1 / (1 + np.exp(-sharpness / 2))
+    alpha = np.zeros((steps, n_regimes))
+    segment = steps / (len(regimes) - 1)
+    for t in range(steps):
+        s = min(int(t / segment), len(regimes) - 2)
+        p = np.clip((t - s * segment) / segment, 0, 1)
+        progress = (1 / (1 + np.exp(-sharpness * (p - 0.5))) - lo) / (hi - lo)
+        alpha[t, regimes[s]] = 1 - progress
+        alpha[t, regimes[s + 1]] = progress
+    return alpha
+
+
+def simultaneous_path(steps, regimes, n_regimes):
+    """All given regimes active at once, with weights from phase-shifted cosines.
+
+    Regime i of m gets the raw weight 0.5 * (1 + cos(2 pi (t / (steps - 1) - i / m)))
+    and every row is normalised to sum to one. Returns alpha (steps, n_regimes).
+    """
+    m = len(regimes)
+    t = np.arange(steps)[:, None] / max(steps - 1, 1)
+    raw = 0.5 * (1 + np.cos(2 * np.pi * (t - np.arange(m)[None, :] / m)))
+    if m == 1:
+        raw = np.ones_like(raw)
+    alpha = np.zeros((steps, n_regimes))
+    alpha[:, list(regimes)] = raw / raw.sum(axis=1, keepdims=True)
+    return alpha
+
+
+PATHS = {"linear": linear_path, "sigmoid": sigmoid_path, "simultaneous": simultaneous_path}
+
+
 def transition(system, alpha, batch=500, seed=1):
     """Test data along a weight trajectory alpha (T, K).
 

@@ -25,6 +25,8 @@ def main():
     p.add_argument("--per-regime", type=int, default=20000, help="training windows per regime")
     p.add_argument("--epochs", type=int, default=100)
     p.add_argument("--steps", type=int, default=50, help="length of the test path")
+    p.add_argument("--path", choices=sorted(transitions.PATHS), default="linear",
+                   help="shape of the test path")
     p.add_argument("--window", type=int, default=5, help="half-width of temporal smoothing")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -46,7 +48,7 @@ def main():
     active = tracking.select_separated(means, args.active)
     basis = tracking.build_basis(means, active)
 
-    alpha_true = transitions.linear_path(args.steps, active, args.regimes)
+    alpha_true = transitions.PATHS[args.path](args.steps, active, args.regimes)
     x_path, _ = transitions.transition(system, alpha_true, seed=args.seed + 1)
     z_path = vae.encode(x_path)[:, :, -1]                 # (batch, steps, n)
     alpha_raw = tracking.track(z_path, basis)
@@ -54,7 +56,7 @@ def main():
     alpha_true = alpha_true[:, active]
 
     print(f"\nlatent recovery (MCC)            {score:.3f}")
-    print(f"path through regimes             {active}")
+    print(f"path through regimes             {active} ({args.path})")
     print(f"smallest singular value of B     {basis.sigma_min:.3f}")
     print(f"weight correlation, raw          {weight_correlation(alpha_raw, alpha_true):.3f}")
     print(f"weight correlation, smoothed     {weight_correlation(alpha_hat, alpha_true):.3f}")
