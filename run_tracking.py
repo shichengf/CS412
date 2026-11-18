@@ -14,6 +14,7 @@ import torch
 
 from dyncrl import TemporalVAE, fit_stage1
 from dyncrl import tracking
+from dyncrl.baselines import switching
 from dyncrl.data import transitions
 from dyncrl.metrics import mcc, weight_correlation
 
@@ -55,15 +56,24 @@ def main():
     alpha_hat = tracking.track(z_path, basis, window=args.window)
     alpha_true = alpha_true[:, active]
 
+    # Discrete-switching baseline on the same latents
+    alpha_hard = switching.hard_assign(z_path, means, active)
+    alpha_soft = switching.soft_assign(z_path, means, active)
+
     print(f"\nlatent recovery (MCC)            {score:.3f}")
     print(f"path through regimes             {active} ({args.path})")
     print(f"smallest singular value of B     {basis.sigma_min:.3f}")
-    print(f"weight correlation, raw          {weight_correlation(alpha_raw, alpha_true):.3f}")
-    print(f"weight correlation, smoothed     {weight_correlation(alpha_hat, alpha_true):.3f}")
+
+    rows = [("tracking, raw", alpha_raw), ("tracking, smoothed", alpha_hat),
+            ("hard assignment", alpha_hard), ("soft assignment", alpha_soft)]
+    print(f"\n{'readout':<24} weight correlation")
+    for name, alpha in rows:
+        print(f"{name:<24} {weight_correlation(alpha, alpha_true):.3f}")
 
     os.makedirs(args.out, exist_ok=True)
     np.savez(os.path.join(args.out, "weights.npz"), alpha_true=alpha_true, alpha_raw=alpha_raw,
-             alpha_hat=alpha_hat, alpha_calibrated=tracking.calibrate(alpha_hat), regimes=active)
+             alpha_hat=alpha_hat, alpha_calibrated=tracking.calibrate(alpha_hat),
+             alpha_hard=alpha_hard, alpha_soft=alpha_soft, regimes=active)
     print(f"saved {args.out}/weights.npz")
 
 
